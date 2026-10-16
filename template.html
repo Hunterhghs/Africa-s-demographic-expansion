@@ -375,14 +375,15 @@ function colorForGrowth(g){
 }
 
 function styleFeature(f){
+  if(!RANGES) computeRangesOnce();
   const iso=f.properties.iso;
   const c=COUNTRIES[iso];
-  const isAfrica = c && c.region==='UN_AFR';
+  if(!c){ return {fillColor:'#10161f', fillOpacity:0.5, color:'#1c2633', weight:0.5}; }
+  const isAfrica = c.region==='UN_AFR';
   const stroke = isAfrica ? {color:'#f0a04b', weight:1.3, opacity:0.9} : {color:'#22304a', weight:0.6, opacity:0.8};
   if(metric==='diaspora'){
     return {fillColor: isAfrica ? '#2a2a38' : '#141c26', fillOpacity:0.55, ...stroke};
   }
-  if(!c){ return {fillColor:'#10161f', fillOpacity:0.5, color:'#1c2633', weight:0.5}; }
   const v=c.v5[yearIdx];
   if(v==null) return {fillColor:'#10161f', fillOpacity:0.5, ...stroke};
   let color;
@@ -562,7 +563,7 @@ function buildAgeDatasets(){
 
 function renderChart(){
   const ctx=document.getElementById('chart').getContext('2d');
-  const cfg=baseChartCfg();
+  const cfg={type:'line', data:{}, options:baseChartCfg()};
   const xScale={type:'linear',min:2000,max:2300,grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.tick,font:{size:9},stepSize:50}};
 
   if(activeTab==='traj'){
@@ -596,10 +597,10 @@ function renderChart(){
     cfg.options.indexAxis='y';
     cfg.options.scales.x={type:'linear',grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.tick,font:{size:9},callback:v=>v.toFixed(1)+'B'},title:{display:true,text:'billions in 2100',color:CHART_COLORS.tick,font:{size:9}}};
     cfg.options.scales.y={grid:{display:false},ticks:{color:'#9aa7bb',font:{size:9},autoSkip:false}};
-    cfg.options.plugins.tooltip.callbacks.label=function(c){
+    cfg.options.plugins.tooltip.callbacks={label:function(c){
       const idx=c.dataIndex, g=r.grow[idx];
       return ' 2100: '+c.parsed.x.toFixed(2)+' B  ·  2024: '+fmtPop(r.p2024[idx])+'  ·  Δ2000–2100 '+(g>0?'+':'')+g+'%';
-    };
+    }};
     cfg.options.interaction={mode:'nearest',axis:'y'};
   } else if(activeTab==='age'){
     cfg.type='line';
@@ -607,9 +608,9 @@ function renderChart(){
     cfg.options.scales.x=xScale;
     cfg.options.scales.y={position:'left',grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.tick,font:{size:9}},title:{display:true,text:'median age · years',color:CHART_COLORS.tick,font:{size:9}}};
     cfg.options.scales.y1={position:'right',min:1.5,max:5.5,grid:{display:false},ticks:{color:'#e35a3c',font:{size:9}},title:{display:true,text:'TFR',color:'#e35a3c',font:{size:9}}};
-    cfg.options.plugins.tooltip.callbacks.label=function(c){
+    cfg.options.plugins.tooltip.callbacks={label:function(c){
       return c.dataset.yAxisID==='y1' ? ' '+c.dataset.label+': '+c.parsed.y.toFixed(2) : ' '+c.dataset.label+': '+c.parsed.y.toFixed(1)+' yrs';
-    };
+    }};
   }
 
   if(chart){ chart.destroy(); }
