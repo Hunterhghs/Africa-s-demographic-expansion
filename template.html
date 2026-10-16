@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Africa Ascendant — Demographic Expansion &amp; the Global African Diaspora, 2000–2300</title>
-<meta name="description" content="Fixed-position world-map dashboard: Africa's demographic expansion, diaspora and mixed-ancestry trajectories from 2000 to 2300. UN WPP 2024 to 2100, H Heuristics extended scenario beyond.">
+<title>Africa Ascendant — Demographic Expansion &amp; the Global African Diaspora, 2000–2500</title>
+<meta name="description" content="Fixed-position world-map dashboard: Africa's demographic expansion, diaspora and mixed-ancestry trajectories from 2000 to 2500. UN WPP 2024 to 2100, H Heuristics extended scenario beyond.">
 <meta name="author" content="H Heuristics">
 <meta name="theme-color" content="#080e14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -183,7 +183,7 @@ input[type=range].year-slider::-moz-range-thumb{width:14px;height:14px;border-ra
     </div>
     <div class="brand-text">
       <h1>AFRICA ASCENDANT</h1>
-      <div class="sub">Demographic expansion &amp; the global African diaspora · 2000–2300</div>
+      <div class="sub">Demographic expansion &amp; the global African diaspora · 2000–2500</div>
     </div>
   </div>
   <div class="yearctl">
@@ -192,8 +192,8 @@ input[type=range].year-slider::-moz-range-thumb{width:14px;height:14px;border-ra
     <button class="year-nav" id="y-next" title="Next 5-year step">›</button>
     <div class="year-display" id="y-display">2100</div>
     <div class="year-slider-wrap">
-      <input type="range" class="year-slider" id="y-slider" min="0" max="60" step="1" value="20">
-      <div class="year-labels"><span>2000</span><span>2150</span><span>2300</span></div>
+      <input type="range" class="year-slider" id="y-slider" min="0" max="100" step="1" value="20">
+      <div class="year-labels"><span>2000</span><span>2250</span><span>2500</span></div>
     </div>
   </div>
   <div class="ctl">
@@ -336,7 +336,7 @@ function under25Share(i){ return interpAnchors(D.meta.diaspora.under25, YEARS5[i
 const POP_STOPS = ['#15202e','#2c2a44','#6b2f4a','#a8503a','#e08a3c','#f7d488'];
 const GROW_STOPS = ['#3b6fd4','#7fa8d9','#59626f','#e08a3c','#e35a3c'];
 
-const map = L.map('map', {zoomControl:true, worldCopyJump:true, minZoom:2, maxZoom:7, attributionControl:true, zoomSnap:0.5});
+const map = L.map('map', {zoomControl:false, worldCopyJump:true, minZoom:2, maxZoom:7, attributionControl:true, zoomSnap:0.5});
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   attribution:'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ &copy; OpenStreetMap contributors',
   maxZoom: 10, noWrap:false
@@ -564,7 +564,7 @@ function buildAgeDatasets(){
 function renderChart(){
   const ctx=document.getElementById('chart').getContext('2d');
   const cfg={type:'line', data:{}, options:baseChartCfg()};
-  const xScale={type:'linear',min:2000,max:2300,grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.tick,font:{size:9},stepSize:50}};
+  const xScale={type:'linear',min:2000,max:2500,grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.tick,font:{size:9},stepSize:50}};
 
   if(activeTab==='traj'){
     cfg.type='line'; cfg.data={datasets:buildTrajDatasets()};

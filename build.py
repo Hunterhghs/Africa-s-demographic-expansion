@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Africa's Demographic Expansion (2000-2300) — dashboard build script.
+Africa's Demographic Expansion (2000-2500) — dashboard build script.
 
 Builds a fully self-contained index.html by injecting a compact data payload
 into template.html.
@@ -13,9 +13,9 @@ Data sources:
   - Natural Earth 110m admin-0 country boundaries (GeoJSON)
 
 Horizon handling (important):
-  Official UN projections end in 2100. For 2105-2300 this script applies an
+  Official UN projections end in 2100. For 2105-2500 this script applies an
   H Heuristics extended scenario: each UN region is eased from its 2100 value
-  toward a 2300 anchor (Africa ~half of humanity), and countries are scaled by
+  toward a 2500 anchor (Africa ~half of humanity), and countries are scaled by
   their region's factor. Every post-2100 value is flagged as EXTENDED in the UI.
 """
 
@@ -45,8 +45,8 @@ REGIONS = {
     "UN_OCE": {"name": "Oceania",                     "short": "Oceania",       "color": "#9c8bd9"},
 }
 
-# 5-year steps 2000..2300 inclusive = 61 points
-YEARS5 = list(range(2000, 2301, 5))
+# 5-year steps 2000..2500 inclusive = 101 points
+YEARS5 = list(range(2000, 2501, 5))
 IDX_2100 = YEARS5.index(2100)
 IDX_2020 = 4   # 5-year steps: idx 0=2000 ... idx 4=2020, idx 5=2025
 IDX_2025 = 5
@@ -59,27 +59,28 @@ def interp2024(v2020, v2025):
     return round(0.2 * v2020 + 0.8 * v2025)
 
 # Post-2100 extended-scenario anchors (absolute persons), H Heuristics scenario.
-# Anchored to UN WPP 2024 medium 2100 values; 2300 targets keep Africa near
+# Anchored to UN WPP 2024 medium 2100 values; 2500 targets keep Africa near
 # half of a roughly stable world, consistent with the report's "beyond 2100" note.
-TARGETS_2300 = {
-    "UN_AFR": 5_300_000_000,
-    "UN_ASI": 3_750_000_000,
-    "UN_EUR": 500_000_000,
-    "UN_LAC": 600_000_000,
-    "UN_NAM": 440_000_000,
-    "UN_OCE": 85_000_000,
+TARGETS_2500 = {
+    "UN_AFR": 5_600_000_000,
+    "UN_ASI": 3_550_000_000,
+    "UN_EUR": 470_000_000,
+    "UN_LAC": 590_000_000,
+    "UN_NAM": 435_000_000,
+    "UN_OCE": 90_000_000,
 }
 
-# Median-age 2300 anchors (years), extended from UN WPP 2024 2100 values.
-MEDIAN_2300 = {
-    "UN_AFR": 44.0, "UN_ASI": 46.0, "UN_EUR": 48.0,
-    "UN_LAC": 47.0, "UN_NAM": 46.0, "UN_OCE": 43.0, "WLD": 46.0,
+# Median-age 2500 anchors (years), extended from UN WPP 2024 2100 values.
+MEDIAN_2500 = {
+    "UN_AFR": 46.5, "UN_ASI": 47.5, "UN_EUR": 49.0,
+    "UN_LAC": 48.0, "UN_NAM": 47.0, "UN_OCE": 45.0, "WLD": 47.5,
 }
 
 # Africa fertility (births per woman): UN historical/projected anchors from the
 # H Heuristics report (3.9 in 2024 -> 2.8 in 2050 -> 2.0 in 2100), extended.
 AFRICA_TFR_ANCHORS = [
-    [2000, 5.10], [2024, 3.90], [2050, 2.80], [2100, 2.00], [2200, 1.88], [2300, 1.82],
+    [2000, 5.10], [2024, 3.90], [2050, 2.80], [2100, 2.00],
+    [2200, 1.88], [2300, 1.82], [2400, 1.80], [2500, 1.79],
 ]
 
 # Illustrative diaspora / ancestry scenario anchors (H Heuristics synthesis).
@@ -91,9 +92,10 @@ AFRICA_TFR_ANCHORS = [
 DIASPORA_RATIOS = [0.0147, 0.02, 0.03]
 INTRA_RATIO = 0.0155  # Africa-born living in another African country (2020 = 20.8M)
 BROAD_ANCESTRY_ANCHORS = [
-    [2000, 0.36], [2025, 0.44], [2050, 0.62], [2100, 1.05], [2200, 1.62], [2300, 2.10],  # billions
+    [2000, 0.36], [2025, 0.44], [2050, 0.62], [2100, 1.05],
+    [2200, 1.62], [2300, 2.10], [2400, 2.45], [2500, 2.70],  # billions
 ]
-UNDER25_ANCHORS = [[2000, 24.0], [2024, 28.0], [2100, 46.0], [2300, 47.0]]  # %
+UNDER25_ANCHORS = [[2000, 24.0], [2024, 28.0], [2100, 46.0], [2300, 47.0], [2500, 47.5]]  # %
 
 
 def fetch():
@@ -133,19 +135,19 @@ def smoothstep(t):
     return 0.5 - 0.5 * math.cos(math.pi * min(1.0, max(0.0, t)))
 
 
-def extend_series(vals_to_2100, target_2300, idx2100=IDX_2100, n=len(YEARS5)):
-    """Extend a 2000..2100 series to 2000..2300 using a smooth ease to target."""
+def extend_series(vals_to_2100, target_2500, idx2100=IDX_2100, n=len(YEARS5)):
+    """Extend a 2000..2100 series to 2000..2500 using a smooth ease to target."""
     out = list(vals_to_2100)
     v2100 = vals_to_2100[idx2100]
     for i in range(idx2100 + 1, n):
-        t = (YEARS5[i] - 2100) / 200.0
+        t = (YEARS5[i] - 2100) / 400.0
         f = smoothstep(t)
-        out.append(v2100 + (target_2300 - v2100) * f)
+        out.append(v2100 + (target_2500 - v2100) * f)
     return out
 
 
 def build_region_series(rows):
-    """Region population (thousands) for 2000..2300."""
+    """Region population (thousands) for 2000..2500."""
     table = {}
     for r in rows:
         code = (r.get("Code") or "").strip()
@@ -165,7 +167,7 @@ def build_region_series(rows):
         if len(base) != IDX_2100 + 1:
             print(f"  WARN region {code}: incomplete 2000-2100 series ({len(base)} pts)")
             continue
-        target_k = pop1000(TARGETS_2300[code])
+        target_k = pop1000(TARGETS_2500[code])
         v5 = extend_series(base, target_k)
         out[code] = {
             "name": REGIONS[code]["name"],
@@ -175,7 +177,7 @@ def build_region_series(rows):
             "p2000": base[0],
             "p2024": interp2024(base[IDX_2020], base[IDX_2025]),
             "p2100": base[IDX_2100],
-            "p2300": v5[-1],
+            "p2500": v5[-1],
         }
     return out
 
@@ -196,7 +198,7 @@ def build_world(regions):
 
 
 def build_median_series(rows, regions):
-    """Median age (1 decimal) for world + regions, 2000..2300."""
+    """Median age (1 decimal) for world + regions, 2000..2500."""
     table = {}
     for r in rows:
         code = (r.get("Code") or "").strip()
@@ -218,17 +220,17 @@ def build_median_series(rows, regions):
         base = [d.get(y) for y in YEARS5 if y <= 2100]
         if len(base) != IDX_2100 + 1:
             continue
-        target = MEDIAN_2300.get(key, base[IDX_2100])
+        target = MEDIAN_2500.get(key, base[IDX_2100])
         v5 = extend_series(base, target)
-        result[key] = {"v5": v5, "p2000": base[0], "p2100": base[IDX_2100], "p2300": v5[-1]}
+        result[key] = {"v5": v5, "p2000": base[0], "p2100": base[IDX_2100], "p2500": v5[-1]}
     # ensure Africa exists even if data quirks
     if "UN_AFR" not in result and regions.get("UN_AFR"):
-        result["UN_AFR"] = {"v5": [19.0] * (IDX_2100 + 1), "p2000": 19.0, "p2100": 35.0, "p2300": 44.0}
+        result["UN_AFR"] = {"v5": [19.0] * (IDX_2100 + 1), "p2000": 19.0, "p2100": 35.0, "p2500": 46.5}
     return result
 
 
 def build_africa_tfr(rows):
-    """Africa fertility 2000..2300 from UN data (to 2100) + extended anchors."""
+    """Africa fertility 2000..2500 from UN data (to 2100) + extended anchors."""
     vals = {}
     for r in rows:
         code = (r.get("Code") or "").strip()
@@ -262,7 +264,7 @@ def build_africa_tfr(rows):
 
 
 def build_countries(rows, geojson_lookup, regions):
-    """Country population (thousands) 2000..2300, extended by region factor."""
+    """Country population (thousands) 2000..2500, extended by region factor."""
     import re
     iso3_re = re.compile(r"^[A-Z]{3}$")
     series, names = {}, {}
@@ -376,13 +378,13 @@ def main():
         "years5": YEARS5,
         "idx2100": IDX_2100,
         "title": "Africa's Demographic Expansion",
-        "subtitle": "Population, diaspora & mixed ancestry · 2000-2300",
-        "source": "UN WPP 2024 (to 2100) · H Heuristics extended scenario (2105-2300)",
+        "subtitle": "Population, diaspora & mixed ancestry · 2000-2500",
+        "source": "UN WPP 2024 (to 2100) · H Heuristics extended scenario (2105-2500)",
         "africa": {
             "p2000": afr.get("p2000"),
             "p2024": afr.get("p2024"),
             "p2100": afr.get("p2100"),
-            "p2300": afr.get("p2300"),
+            "p2500": afr.get("p2500"),
         },
         "regions": [{"code": c, "name": REGIONS[c]["name"], "short": REGIONS[c]["short"], "color": REGIONS[c]["color"]} for c in REGIONS],
         "diaspora": {
@@ -424,8 +426,8 @@ def main():
 
     (DATA / "payload.json").write_text(json.dumps(payload, separators=(",", ":")))
     print(f"  countries: {len(countries)} | geo features: {len(geojson_feats)}")
-    print(f"  Africa: 2000={afr.get('p2000')}k 2024={afr.get('p2024')}k 2100={afr.get('p2100')}k 2300={afr.get('p2300')}k")
-    print(f"  Africa share: 2024={afr['p2024']/world[4]*100:.1f}% 2100={afr['p2100']/world[IDX_2100]*100:.1f}% 2300={afr['p2300']/world[-1]*100:.1f}%")
+    print(f"  Africa: 2000={afr.get('p2000')}k 2024={afr.get('p2024')}k 2100={afr.get('p2100')}k 2500={afr.get('p2500')}k")
+    print(f"  Africa share: 2024={afr['p2024']/world[4]*100:.1f}% 2100={afr['p2100']/world[IDX_2100]*100:.1f}% 2500={afr['p2500']/world[-1]*100:.1f}%")
 
     tpl = (ROOT / "template.html").read_text(encoding="utf-8")
     marker = "/*__PAYLOAD__*/"
