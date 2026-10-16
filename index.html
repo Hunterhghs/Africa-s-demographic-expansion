@@ -93,6 +93,8 @@ input[type=range].year-slider::-moz-range-thumb{width:14px;height:14px;border-ra
 
 /* KPI grid */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem}
+.kpi-card.wide{grid-column:1/-1;background:linear-gradient(120deg,rgba(240,160,75,0.10),rgba(122,59,82,0.08));border-color:rgba(240,160,75,0.35)}
+.kpi-card.wide .val{font-size:1.35rem}
 .kpi-card{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem}
 .kpi-card .lbl{font-size:0.54rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;line-height:1.3;min-height:2em}
 .kpi-card .val{font-family:var(--font-mono);font-size:1.15rem;font-weight:600;color:var(--text);margin-top:0.25rem}
@@ -238,6 +240,11 @@ input[type=range].year-slider::-moz-range-thumb{width:14px;height:14px;border-ra
           <div class="val" id="kpi-under25">46<span class="unit">%</span></div>
           <div class="sub">Africa's youth share of world total</div>
         </div>
+        <div class="kpi-card wide">
+          <div class="lbl">Any African ancestry · worldwide</div>
+          <div class="val" id="kpi-ancestry-world">4.86<span class="unit">B</span></div>
+          <div class="sub" id="kpi-ancestry-world-sub">low 4.73 B · high 5.06 B · 48% of humanity</div>
+        </div>
       </div>
 
       <section>
@@ -331,6 +338,11 @@ function bornOutsideM(i, ratio){ return AFRICA.v5[i]*ratio/1000; }     // millio
 function intraAfricaM(i){ return AFRICA.v5[i]*D.meta.diaspora.intraRatio/1000; }
 function broadAncestryM(i){ return interpAnchors(D.meta.diaspora.broadAncestry, YEARS5[i])*1000; }
 function under25Share(i){ return interpAnchors(D.meta.diaspora.under25, YEARS5[i]); }
+// Worldwide "any African ancestry" envelope = Africa's population + the
+// (illustrative) any-African-ancestry population abroad. Low/high are
+// proportional envelopes around the central abroad scenario.
+const ANCESTRY_LOW = 0.87, ANCESTRY_HIGH = 1.19;
+function worldwideAncestryM(i, factor){ return africaPopM(i) + broadAncestryM(i)*factor; }
 
 /* ══════════ Map ══════════ */
 const POP_STOPS = ['#15202e','#2c2a44','#6b2f4a','#a8503a','#e08a3c','#f7d488'];
@@ -540,6 +552,17 @@ function buildDiasporaDatasets(){
   ds.push({label:'Any African ancestry abroad (illustrative)',
     data:YEARS5.map((yr,i)=>({x:yr,y:broadAncestryM(i)})),
     borderColor:'#e8c76a', borderDash:[3,3], borderWidth:2.2, pointRadius:0, tension:0.3, fill:false});
+  const ww=[
+    {label:'Any African ancestry worldwide · low', f:ANCESTRY_LOW, color:'#6aa0a8', dash:[4,4], w:1.7},
+    {label:'Any African ancestry worldwide · central', f:1.0, color:'#e8c76a', dash:[], w:2.8},
+    {label:'Any African ancestry worldwide · high', f:ANCESTRY_HIGH, color:'#f26d5b', dash:[4,4], w:1.7},
+  ];
+  ww.forEach(d=>{
+    ds.push({label:d.label,
+      data:YEARS5.map((yr,i)=>({x:yr,y:worldwideAncestryM(i,d.f)})),
+      borderColor:d.color, backgroundColor:'transparent', borderWidth:d.w, borderDash:d.dash,
+      pointRadius:0, tension:0.3, fill:false});
+  });
   return ds;
 }
 function buildRankData(){
@@ -629,7 +652,8 @@ function renderChartLegend(){
     html+='<span class="hint">reference lines: 25% · ⅓ · 50%</span>';
   } else if(activeTab==='dias'){
     html='<span><i style="background:#7aa6d6"></i>Lower 1.47%</span><span><i style="background:#f0a04b"></i>Continuity 2%</span><span><i style="background:#e35a3c"></i>High 3%</span>';
-    html+='<span><i style="background:transparent;border:1px dashed #e8c76a"></i>Any African ancestry (illustrative)</span>';
+    html+='<span><i style="background:transparent;border:1px dashed #e8c76a"></i>Any African ancestry abroad</span>';
+    html+='<span><i style="background:#6aa0a8"></i>Worldwide low</span><span><i style="background:#e8c76a"></i>Worldwide central</span><span><i style="background:#f26d5b"></i>Worldwide high</span>';
   } else if(activeTab==='rank'){
     html='<span><i style="background:#f0a04b"></i>African country</span><span><i style="background:#3a4a60"></i>Non-African</span><span class="hint">projected population in 2100, UN medium</span>';
   } else {
@@ -694,6 +718,13 @@ function updateKpis(){
   const anc=broadAncestryM(yearIdx);
   document.getElementById('kpi-ancestry').innerHTML=(anc>=1000?(anc/1000).toFixed(2)+'<span class="unit">B</span>':Math.round(anc)+'<span class="unit">M</span>');
   document.getElementById('kpi-under25').innerHTML=under25Share(yearIdx).toFixed(0)+'<span class="unit">%</span>';
+
+  const ancW=worldwideAncestryM(yearIdx,1);
+  const ancWLow=worldwideAncestryM(yearIdx,ANCESTRY_LOW);
+  const ancWHigh=worldwideAncestryM(yearIdx,ANCESTRY_HIGH);
+  const ancShareW=ancW/(D.world[yearIdx]/1000)*100;
+  document.getElementById('kpi-ancestry-world').innerHTML=fmtM(ancW);
+  document.getElementById('kpi-ancestry-world-sub').textContent='low '+fmtM(ancWLow)+' · high '+fmtM(ancWHigh)+' · '+ancShareW.toFixed(0)+'% of humanity';
 
   const badge=document.getElementById('horizon-badge');
   const kpHorizon=document.getElementById('kpi-horizon');

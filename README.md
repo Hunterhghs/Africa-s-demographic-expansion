@@ -13,7 +13,7 @@ It visualizes the research report *"Africa's Demographic Expansion and the Globa
 - **Africa KPI panel** — Africa's population, share of humanity, Africa-born stock abroad, broad mixed-ancestry scenario, and Africa's share of the world's under-25s.
 - **Continental ledger** — all six UN regions at the selected year.
 - **Top African countries in 2100** — Nigeria, DRC, Ethiopia, Tanzania, Egypt, Sudan.
-- **Chart panel** — Trajectory (regions + world), Africa's rising share, diaspora envelopes (1.47% / 2% / 3% mobility + broad-ancestry scenario), top-12 countries in 2100, and age/fertility.
+- **Chart panel** — Trajectory (regions + world), Africa's rising share, diaspora envelopes (1.47% / 2% / 3% mobility + broad-ancestry scenario + **worldwide any-African-ancestry low/central/high**), top-12 countries in 2100, and age/fertility.
 
 ## Data & horizon honesty
 
