@@ -1,0 +1,8 @@
+# VELES — Fable-5 × DeepSeek Hybrid — H Heuristics AI Agent Pipeline
+
+[fable]
+provider = "deepseek"
+model = "deepseek-chat"
+memory_backend = "sqlite"
+max_iterations = 20
+max_delegations = 8
